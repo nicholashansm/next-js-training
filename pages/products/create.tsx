@@ -1,10 +1,13 @@
 import { WithDefaultLayout } from "@/components/DefautLayout";
 import { Page } from "@/types/Page"
-import { Button, Col, Input, InputNumber, Row, Space } from "antd";
+import { Alert, Button, Col, Input, InputNumber, Row, Space } from "antd";
 import React, { FormEvent, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from "next/link";
+import { useAtom } from "jotai";
+import productListAtom from "@/data/Products";
 
 /**
  * Define the create form data structure.
@@ -28,9 +31,9 @@ const CreateProductPage: Page = () => {
  * Create the create product form Zod schema.
  */
 const CreateProductFormSchema = z.object({
-    name: z.string().nonempty({message: 'Product name is required.'})
-    .max(50, {message: 'Product name must be less than 50 characters.'}),
-    price: z.number().min(10_000, {message: 'Product price must be at least 10,000.'})
+    name: z.string().nonempty({ message: 'Product name is required.' })
+        .max(50, { message: 'Product name must be less than 50 characters.' }),
+    price: z.number().min(10_000, { message: 'Product price must be at least 10,000.' })
 });
 
 /**
@@ -45,7 +48,12 @@ type CreateProductFormType = z.infer<typeof CreateProductFormSchema>;
 const CreateProductForm: React.FC = () => {
     const { handleSubmit, control, formState: { errors } } = useForm<CreateProductFormType>({
         resolver: zodResolver(CreateProductFormSchema),
+        mode: 'onChange'
     });
+
+    const [products, setProducts] = useAtom(productListAtom);
+
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
 
     /**
      * Handle the form submission event.
@@ -53,7 +61,13 @@ const CreateProductForm: React.FC = () => {
      * @returns 
      */
     function onFormSubmit(formData: CreateProductFormData) {
-        alert(`Product Name: ${formData.name}\nProduct Price: ${formData.price}`);
+        setProducts([...products, {
+            id: Math.random().toString(),
+            name: formData.name,
+            price: formData.price
+        }]);
+
+        setIsAlertVisible(true);
     }
 
     return <Space direction="vertical" size={"middle"} style={{ display: 'flex' }}>
@@ -61,8 +75,22 @@ const CreateProductForm: React.FC = () => {
             <Col span={24}>
                 <h1>Create Product</h1>
                 <p>Fill in the form below to create a new product.</p>
+                <p><Link href={'/products'}>Or click here to go back to Products page.</Link></p>
             </Col>
         </Row>
+
+        {isAlertVisible &&
+            <Row>
+                <Col span={24}>
+                    <Alert
+                        message="Product created successfully!"
+                        type="success"
+                        closable
+                        onClose={() => setIsAlertVisible(false)}
+                    />
+                </Col>
+            </Row>
+        }
 
         <Row>
             <Col span={24}>
@@ -74,7 +102,7 @@ const CreateProductForm: React.FC = () => {
                                 we must use the Controller component */}
                                 <Controller name="name"
                                     control={control}
-                                    render={({ field }) => <Input placeholder="Product Name"
+                                    render={({ field }) => <Input id="name" placeholder="Product Name"
                                         addonBefore="Product Name" {...field} />} />
                                 {errors.name && <span className="text-red-500">{errors.name.message}</span>}
                             </Col>
@@ -84,7 +112,7 @@ const CreateProductForm: React.FC = () => {
                             <Col span={18}>
                                 <Controller name="price"
                                     control={control}
-                                    render={({ field }) => <InputNumber defaultValue={0}
+                                    render={({ field }) => <InputNumber id="price" defaultValue={0}
                                         addonBefore="Product Price" {...field} />} />
 
                                 {errors.price && <span className="text-red-500">{errors.price.message}</span>}
