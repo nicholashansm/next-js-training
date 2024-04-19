@@ -3,19 +3,12 @@ import { Page } from "@/types/Page"
 import { Alert, Button, Col, Input, InputNumber, Row, Space } from "antd";
 import React, { FormEvent, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from "next/link";
 import { useAtom } from "jotai";
 import productListAtom from "@/data/Products";
-
-/**
- * Define the create form data structure.
- */
-interface CreateProductFormData {
-    name: string;
-    price: number;
-}
+import CreateOrEditProductForm from "@/types/CreateOrEditProductForm";
+import { CreateOrEditProductFormSchema, CreateOrEditProductFormType } from "@/schemas/CreateOrEditProductSchema";
 
 /**
  * Create new product page component.
@@ -28,26 +21,12 @@ const CreateProductPage: Page = () => {
 }
 
 /**
- * Create the create product form Zod schema.
- */
-const CreateProductFormSchema = z.object({
-    name: z.string().nonempty({ message: 'Product name is required.' })
-        .max(50, { message: 'Product name must be less than 50 characters.' }),
-    price: z.number().min(10_000, { message: 'Product price must be at least 10,000.' })
-});
-
-/**
- * Obtain the typing from the schema.
- */
-type CreateProductFormType = z.infer<typeof CreateProductFormSchema>;
-
-/**
  * Create product form component using React Hook Form & Zod validation.
  * @returns 
  */
 const CreateProductForm: React.FC = () => {
-    const { handleSubmit, control, formState: { errors } } = useForm<CreateProductFormType>({
-        resolver: zodResolver(CreateProductFormSchema),
+    const { handleSubmit, control, formState: { errors }, reset } = useForm<CreateOrEditProductFormType>({
+        resolver: zodResolver(CreateOrEditProductFormSchema),
         mode: 'onChange'
     });
 
@@ -60,7 +39,7 @@ const CreateProductForm: React.FC = () => {
      * @param e 
      * @returns 
      */
-    function onFormSubmit(formData: CreateProductFormData) {
+    function onFormSubmit(formData: CreateOrEditProductForm) {
         setProducts([...products, {
             id: Math.random().toString(),
             name: formData.name,
@@ -68,6 +47,7 @@ const CreateProductForm: React.FC = () => {
         }]);
 
         setIsAlertVisible(true);
+        reset({price: 0});
     }
 
     return <Space direction="vertical" size={"middle"} style={{ display: 'flex' }}>
@@ -141,14 +121,14 @@ const CreateProductForm: React.FC = () => {
  * @returns 
  */
 export const CreateForm: React.FC = () => {
-    const { handleSubmit, control, formState: { errors } } = useForm<CreateProductFormData>();
+    const { handleSubmit, control, formState: { errors } } = useForm<CreateOrEditProductForm>();
 
     /**
      * Handle the form submission event.
      * @param e 
      * @returns 
      */
-    function onFormSubmit(formData: CreateProductFormData) {
+    function onFormSubmit(formData: CreateOrEditProductForm) {
         alert(`Product Name: ${formData.name}\nProduct Price: ${formData.price}`);
     }
 
@@ -244,7 +224,7 @@ export const ManualValidationCreateForm: React.FC = () => {
     /**
      * Define the create form data state.
      */
-    const [formData, setFormData] = useState<CreateProductFormData>({
+    const [formData, setFormData] = useState<CreateOrEditProductForm>({
         name: '',
         price: 0,
     })
