@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Head from 'next/head';
 import { Avatar, Button, ConfigProvider, Drawer, Layout, Menu, MenuProps } from "antd";
-import { faBars, faSignOut, faSignIn, faHome, faCubes, faUser, faUsers, faFlaskVial } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faSignOut, faSignIn, faHome, faCubes, faUser, faUsers, faBox } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/router";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -58,47 +58,32 @@ const DefaultLayout: React.FC<{
                 ]
             },
             {
-                key: '#menu-2',
-                label: 'Menu 2',
-                icon: <FontAwesomeIcon icon={faUsers}></FontAwesomeIcon>,
+                key: '#productMenu',
+                label: 'Product',
+                icon: <FontAwesomeIcon icon={faBox}></FontAwesomeIcon>,
                 children: [
                     {
-                        key: '/sub-menu-d',
-                        label: 'Sub Menu D',
-                        onClick: () => router.push('/')
+                        key: '/products',
+                        label: 'List',
+                        onClick: () => router.push('/products')
                     },
                     {
-                        key: '/sub-menu-e',
-                        label: 'Sub Menu E',
-                        onClick: () => router.push('/')
-                    },
-                    {
-                        key: '/sub-menu-f',
-                        label: 'Sub Menu F',
-                        onClick: () => router.push('/')
+                        key: '/products/create',
+                        label: 'Create',
+                        onClick: () => router.push('/products/create')
                     }
                 ]
             },
             {
-                key: '#menu-3',
-                label: 'Menu 3',
-                icon: <FontAwesomeIcon icon={faFlaskVial}></FontAwesomeIcon>,
+                key: '#userMenu',
+                label: 'User',
+                icon: <FontAwesomeIcon icon={faUsers}></FontAwesomeIcon>,
                 children: [
                     {
-                        key: '/sub-menu-g',
-                        label: 'Sub Menu G',
-                        onClick: () => router.push('/')
+                        key: '/users',
+                        label: 'List',
+                        onClick: () => router.push('/users')
                     },
-                    {
-                        key: '/sub-menu-h',
-                        label: 'Sub Menu H',
-                        onClick: () => router.push('/')
-                    },
-                    {
-                        key: '/sub-menu-i',
-                        label: 'Sub Menu I',
-                        onClick: () => router.push('/')
-                    }
                 ]
             }
         );
