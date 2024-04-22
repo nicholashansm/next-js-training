@@ -22,14 +22,12 @@ const ProductIndexPage: Page = () => {
      */
     const pageRows = 10;
 
-    const [products, setProducts] = useState<ProductData[]>([]);
+    const [__products, setProducts] = useState<ProductData[]>([]);
 
     // Reference: https://ant.design/components/modal.
     const [modal, contextHolder] = Modal.useModal();
 
-    // const queryClient = useQueryClient();
-
-    const fetcher = useSwrFetcherWithAccessToken();
+    const queryFetcher = useSwrFetcherWithAccessToken();
 
     /**
      * Define the useQuery hook to fetch the product data from the server.
@@ -41,16 +39,16 @@ const ProductIndexPage: Page = () => {
             // Basic implementation: await (await fetch('/api/be-custom/api/v1/product')).json()
             // Or you can use useFetchWithAccessToken or useSwrFetcherWithAccessToken hook.
             // Or you can event implement your own fetcher, i.e.: useQueryFetcherWithAccessToken.
-            queryFn: async () => await fetcher('/api/be-custom/api/v1/product')
+            queryFn: async () => await queryFetcher('/api/be-custom/api/v1/product')
         });
 
-    
+
     async function fetchProducts() {
         // Basic way.
         // const data = await fetch('/api/be-custom/api/v1/product');
         // const productData = (await data.json()) as ProductDataResponse;
         // const products = productData.productDatas;
-        
+
         // Using the generated client code from NSwag Studio / Swagger.
         const productClient = new ProductClient('http://localhost:3000/api/be-custom');
         const productData = await productClient.productGET('', 1, 10);
@@ -116,12 +114,16 @@ const ProductIndexPage: Page = () => {
      * On click confirm delete product.
      * @param product
      */
-    function onConfirmDeleteProduct(product: ProductData) {
-        // Filter out the product based on the selected product ID and return it as new product list array.
-        // This will remove the selected product from the list.
-        const newProductList = products.filter(p => p.productId !== product.productId);
+    async function onConfirmDeleteProduct(product: ProductData) {
+        const productClient = new ProductClient('http://localhost:3000/api/be-custom');
 
-        setProducts(newProductList);
+        try {
+            await productClient.productDELETE(product.productId);
+        } catch (error) {
+            console.error(error);
+        }
+
+        refetch();
     }
 
     /**
