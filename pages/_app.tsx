@@ -10,6 +10,7 @@ import { SessionErrorHandler } from '../components/SessionErrorHandler';
 // https://fontawesome.com/v5/docs/web/use-with/react#next-js
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '../styles/globals.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 config.autoAddCss = false;
 
 type NextPageWithLayout = NextPage & {
@@ -22,20 +23,25 @@ type AppPropsWithLayout = AppProps<{
     Component: NextPageWithLayout;
 }
 
+const queryClient = new QueryClient();
+
 function CustomApp({
     Component,
     pageProps: { session, ...pageProps }
 }: AppPropsWithLayout): JSX.Element {
+
     // https://nextjs.org/docs/basic-features/layouts#per-page-layouts
     const withLayout = Component.layout ?? (page => page);
     return (
         // https://next-auth.js.org/getting-started/client#sessionprovider
-        <SessionProvider session={session}
-            refetchInterval={120} refetchWhenOffline={false} refetchOnWindowFocus={false}>
-            <SessionErrorHandler>
-                {withLayout(<Component {...pageProps} />)}
-            </SessionErrorHandler>
-        </SessionProvider>
+        <QueryClientProvider client={queryClient}>
+            <SessionProvider session={session}
+                refetchInterval={120} refetchWhenOffline={false} refetchOnWindowFocus={false}>
+                <SessionErrorHandler>
+                    {withLayout(<Component {...pageProps} />)}
+                </SessionErrorHandler>
+            </SessionProvider>
+        </QueryClientProvider>
     );
 }
 

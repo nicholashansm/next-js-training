@@ -1,8 +1,11 @@
 import { WithDefaultLayout } from "@/components/DefautLayout";
+import { ProductClient, ProductDataListResponse } from "@/functions/BackendApiClient";
+import { useSwrFetcherWithAccessToken } from "@/functions/useSwrFetcherWithAccessToken";
 import { Page } from "@/types/Page";
-import { ProductDataResponse, ProductData } from "@/types/products/be/ProductData";
+import { ProductData } from "@/types/products/be/ProductData";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQuery } from "@tanstack/react-query";
 import { Button, Modal, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 import Link from "next/link";
@@ -24,22 +27,52 @@ const ProductIndexPage: Page = () => {
     // Reference: https://ant.design/components/modal.
     const [modal, contextHolder] = Modal.useModal();
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            const data = await fetch('/api/be-custom/api/v1/product');
-            const productData = (await data.json()) as ProductDataResponse;
-            const products = productData.productDatas;
+    // const queryClient = useQueryClient();
 
-            setProducts(products);
+    const fetcher = useSwrFetcherWithAccessToken();
+
+    /**
+     * Define the useQuery hook to fetch the product data from the server.
+     */
+    const { data, refetch, isFetching, isError } = useQuery<ProductDataListResponse>(
+        {
+            queryKey: ['products'],
+            // We must provide our own fetch implementation.
+            // Basic implementation: await (await fetch('/api/be-custom/api/v1/product')).json()
+            // Or you can use useFetchWithAccessToken or useSwrFetcherWithAccessToken hook.
+            // Or you can event implement your own fetcher, i.e.: useQueryFetcherWithAccessToken.
+            queryFn: async () => await fetcher('/api/be-custom/api/v1/product')
+        });
+
+    
+    async function fetchProducts() {
+        // Basic way.
+        // const data = await fetch('/api/be-custom/api/v1/product');
+        // const productData = (await data.json()) as ProductDataResponse;
+        // const products = productData.productDatas;
+        
+        // Using the generated client code from NSwag Studio / Swagger.
+        const productClient = new ProductClient('http://localhost:3000/api/be-custom');
+        const productData = await productClient.productGET('', 1, 10);
+        const products = productData.productDatas as ProductData[];
+
+        if (!products) {
+            return;
         }
+        setProducts(products);
+    }
 
+    // For manual client-side fetching demonstration.
+    // DO NOT USE THIS TECHNIQUE IN REAL CASE.
+    // Use swr or React Query instead for best practice.
+    useEffect(() => {
         try {
             fetchProducts();
         } catch (error) {
             console.error(error);
         }
     }, []);
-    
+
     /**
      * Define the columns for the product table using antd Table component.
      */
@@ -55,7 +88,7 @@ const ProductIndexPage: Page = () => {
         { title: 'Price', dataIndex: 'price' },
         {
             title: 'Action',
-            dataIndex: 'id',
+            dataIndex: 'productId',
             render: (__value, product) => <Button className="bg-red-500" onClick={() => onClickDeleteProduct(product)}>
                 <FontAwesomeIcon className="text-white" icon={faTrash} />
             </Button>
@@ -91,17 +124,39 @@ const ProductIndexPage: Page = () => {
         setProducts(newProductList);
     }
 
+    /**
+     * Render the product data table.
+     * @returns 
+     */
+    function renderTable() {
+        if (isFetching) {
+            return <p>Loading...</p>;
+        }
+
+        if (isError) {
+            return <p>An error has occurred, please contact your admin.</p>;
+        }
+
+        return <>
+            <Table rowKey="productId"
+                dataSource={data?.productDatas}
+                columns={productColumns}></Table>
+
+            <Button type="primary" htmlType="button"
+                className="bg-blue-500"
+                onClick={() => refetch()}>
+                Refresh
+            </Button>
+            {contextHolder}
+        </>
+    }
+
     return <>
         <h1>Products</h1>
 
         <p>Welcome to the product page!</p>
         <Link href="/products/create">Click here to create a product</Link>
-
-        <Table rowKey="id"
-            dataSource={products}
-            columns={productColumns}></Table>
-
-        {contextHolder}
+        {renderTable()}
 
         {/* <table>
             <thead>
@@ -114,10 +169,10 @@ const ProductIndexPage: Page = () => {
 
             <tbody>
                 {products.map((product, index) =>
-                    <tr key={product.id}>
+                    <tr key={product.productId}>
                         <td>{index + 1}</td>
                         <td>
-                            <Link href={`/products/edit/${product.id}`}>
+                            <Link href={`/products/edit/${product.productId}`}>
                                 {product.name}
                             </Link>
                         </td>
