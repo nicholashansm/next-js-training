@@ -1,25 +1,48 @@
 import { WithDefaultLayout } from "@/components/DefautLayout";
-import productListAtom from "@/data/Products";
+import { ProductClient } from "@/functions/BackendApiClient";
+import { useSwrFetcherWithAccessToken } from "@/functions/useSwrFetcherWithAccessToken";
 import { CreateOrEditProductFormType, CreateOrEditProductFormSchema } from "@/schemas/CreateOrEditProductSchema";
 import { Page } from "@/types/Page";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, Col, Form, Input, InputNumber, Row, Space } from "antd";
-import { useAtom } from "jotai";
+import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-const EditProductPage: Page = () => {
-    const router = useRouter();
-    const { id } = router.query;
+// We could use the generated interface from the NSwag Studio or Swagger instead.
+export interface ProductDetailResponse {
+    productId?: string;
+    name?: string | undefined;
+    price?: number;
+}
 
-    const [products, setProducts] = useAtom(productListAtom);
+const EditProductPage: Page<{ id: string }> = ({ id }) => {
     const [isAlertVisible, setIsAlertVisible] = useState(false);
+
+    const queryFetcher = useSwrFetcherWithAccessToken();
+
+    /**
+     * Define the useQuery hook to fetch the product data from the server.
+     */
+    const { data } = useQuery<ProductDetailResponse>(
+        {
+            queryKey: ['products'],
+            // We must provide our own fetch implementation.
+            // Basic implementation: await (await fetch('/api/be-custom/api/v1/product')).json()
+            // Or you can use useFetchWithAccessToken or useSwrFetcherWithAccessToken hook.
+            // Or you can event implement your own fetcher, i.e.: useQueryFetcherWithAccessToken.
+            queryFn: async () => await queryFetcher(`/api/be-custom/api/v1/product/${id}`)
+        });
 
     const { handleSubmit, control, formState: { errors } } = useForm<CreateOrEditProductFormType>({
         resolver: zodResolver(CreateOrEditProductFormSchema),
-        defaultValues: products.find(product => product.id === id),
+        values: {
+            id: data?.productId,
+            name: data?.name as string,
+            price: data?.price as number
+        },
         mode: 'onChange'
     });
 
@@ -28,32 +51,29 @@ const EditProductPage: Page = () => {
      * @param e 
      * @returns 
      */
-    function onFormSubmit(formData: CreateOrEditProductFormType) {
+    async function onFormSubmit(formData: CreateOrEditProductFormType) {
         // ID should not be empty, but whenever we have a nullable property,
         // we should always check if it is null or not first.
         // When validating the form data, including ID and we already using form validation library
         // such as React Hook Form, ideally we should configure the ID validation on the same level.
         // Doing ID validation manually like this just for fast demonstration.
-        if (formData.id === null) {
+
+        console.info(formData);
+        if (!formData.id) {
             // The ideal way to handle this usually tell the user that the ID is not found using alert box.
             return;
         }
 
-        // Always treat all state as immutable, so we need a way to avoid mutate the products object directly.
-        // In most cases, we should just reiterate the array data and manipulate the data we want during the iteration.
-        const newProductList = products.map(product => {
-            if (product.id === formData.id) {
-                return {
-                    ...product,
-                    name: formData.name,
-                    price: formData.price
-                }
-            }
-
-            return product;
-        })
-
-        setProducts(newProductList);
+        // Using the generated client code from NSwag Studio.
+        const productClient = new ProductClient('http://localhost:3000/api/be-custom');
+        try {
+            await productClient.productPUT(formData.id, {
+                name: formData.name,
+                price: formData.price
+            });
+        } catch (error) {
+            console.error(error);
+        }
 
         setIsAlertVisible(true);
     }
@@ -64,7 +84,7 @@ const EditProductPage: Page = () => {
                 <Row>
                     <Col span={24}>
                         <h1>Editing Product</h1>
-                        <p><Link href={'/products'}>Or click here to go back to Products page.</Link></p>
+                        <p><Link href={'/be-products'}>Or click here to go back to Products page.</Link></p>
                     </Col>
                 </Row>
 
@@ -81,7 +101,7 @@ const EditProductPage: Page = () => {
                     </Row>
                 }
 
-                <Form onFinish={handleSubmit(onFormSubmit)}
+                <Form onFinish={(handleSubmit(onFormSubmit))}
                     wrapperCol={{ span: 16 }}
                     style={{ maxWidth: 600 }}>
                     <Form.Item label="Product Name"
@@ -112,6 +132,13 @@ const EditProductPage: Page = () => {
 
         </>
     );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+    // Fetch data from external API.
+    const { id } = context.query;
+
+    return { props: { id } };
 }
 
 EditProductPage.layout = WithDefaultLayout;

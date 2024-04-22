@@ -81,7 +81,7 @@ const ProductIndexPage: Page = () => {
         },
         {
             title: 'Name', dataIndex: 'name',
-            render: (value: string, product) => <Link href={`/products/edit/${product.productId}`}>{value}</Link>
+            render: (value: string, product) => <Link href={`/be-products/edit/${product.productId}`}>{value}</Link>
         },
         { title: 'Price', dataIndex: 'price' },
         {
@@ -157,7 +157,7 @@ const ProductIndexPage: Page = () => {
         <h1>Products</h1>
 
         <p>Welcome to the product page!</p>
-        <Link href="/products/create">Click here to create a product</Link>
+        <Link href="/be-products/create">Click here to create a product</Link>
         {renderTable()}
 
         {/* <table>
