@@ -4,6 +4,7 @@ import { Issuer } from 'openid-client';
 import { custom } from 'openid-client';
 import { AppSettings } from "../../../functions/AppSettings"
 import { UserInfo } from "../../../functions/AuthorizationContext";
+import GoogleProvider from "next-auth/providers/google";
 
 /**
  * Takes a token, and returns a new token with updated
@@ -121,7 +122,12 @@ export const authOptions: NextAuthOptions = {
                     role: profile.role
                 }
             },
-        }
+        },
+        GoogleProvider({
+            id: 'google',
+            clientId: AppSettings.current.googleClientId,
+            clientSecret: AppSettings.current.googleClientSecret,
+        })
     ],
     callbacks: {
         async jwt({ token, account, user }) {

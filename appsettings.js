@@ -5,4 +5,6 @@ module.exports = {
     oidcClientId: process.env['OIDC_CLIENT_ID'] ?? '',
     oidcScope: process.env['OIDC_SCOPE'] ?? '',
     myEnv: process.env['MY_ENV'] ?? '',
+    googleClientId: process.env['GOOGLE_CLIENT_ID'] ?? '',
+    googleClientSecret: process.env['GOOGLE_CLIENT_SECRET'] ?? '',
 };

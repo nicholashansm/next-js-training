@@ -11,6 +11,8 @@ export const Authorize: React.FC<{
         required: true,
         onUnauthenticated() {
             nProgress.start();
+            
+            // Change the provider name to match the one in [...nextauth].ts.
             signIn('oidc');
         },
     });
