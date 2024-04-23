@@ -1,9 +1,10 @@
 import { WithDefaultLayout } from "@/components/DefautLayout";
+import LightModeButton from "@/components/LightModeButton";
 import { ProductClient, ProductDataListResponse } from "@/functions/BackendApiClient";
 import { useSwrFetcherWithAccessToken } from "@/functions/useSwrFetcherWithAccessToken";
 import { Page } from "@/types/Page";
 import { ProductData } from "@/types/products/be/ProductData";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Modal, Table } from "antd";
@@ -87,11 +88,20 @@ const ProductIndexPage: Page = () => {
         {
             title: 'Action',
             dataIndex: 'productId',
-            render: (__value, product) => <Button className="bg-red-500" onClick={() => onClickDeleteProduct(product)}>
-                <FontAwesomeIcon className="text-white" icon={faTrash} />
-            </Button>
+            render: (__value, product) => <>
+                <Button className="bg-gray-200" onClick={() => onClickAddToFavorite(product)}>
+                    <FontAwesomeIcon className="text-white" icon={faStar} />
+                </Button>
+                <Button className="bg-red-500" onClick={() => onClickDeleteProduct(product)}>
+                    <FontAwesomeIcon className="text-white" icon={faTrash} />
+                </Button>
+            </>
         }
-    ]
+    ];
+
+    function onClickAddToFavorite(product: ProductData) {
+        console.log('Add to favorite', product);
+    }
 
     /**
      * On click delete product button.
@@ -155,6 +165,7 @@ const ProductIndexPage: Page = () => {
 
     return <>
         <h1>Products</h1>
+        <LightModeButton></LightModeButton>
 
         <p>Welcome to the product page!</p>
         <Link href="/be-products/create">Click here to create a product</Link>
