@@ -6,8 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/router";
 import { useSession, signIn, signOut } from "next-auth/react";
 import nProgress from "nprogress";
-import { useAtom } from "jotai";
-import lightModeAtom from "@/data/LightMode";
+import LightModeButton from "./LightModeButton";
 
 const { Content, Sider } = Layout;
 
@@ -24,8 +23,6 @@ const DefaultLayout: React.FC<{
 
     // menu.key must match the router.pathname, see example below: "/dashboard"
     const [selected, setSelected] = useState([router.pathname]);
-
-    const [lightMode] = useAtom(lightModeAtom);
 
     // key must also be unique, for obvious reason
     function getMenu(): MenuProps['items'] {
@@ -158,7 +155,6 @@ const DefaultLayout: React.FC<{
                 </Head>
 
                 <Sider width={240} className="pb-24 hidden lg:block">
-                    <span className="text-white">{lightMode ? 'light' : 'dark'}</span>
                     <div className="h-12 p-2 m-4 text-white bg-slate-600">Logo</div>
                     {renderAvatar()}
                     <ConfigProvider theme={{
@@ -174,6 +170,9 @@ const DefaultLayout: React.FC<{
                         <Menu theme="dark" mode="vertical" items={getMenu()}
                             selectedKeys={selected} onSelect={e => setSelected(e.selectedKeys)} />
                     </ConfigProvider>
+                    <div className="flex justify-center p-2 bg-slate-600">
+                        <LightModeButton className="bg-white"></LightModeButton>
+                    </div>
                 </Sider>
                 <Drawer placement="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
                     <ConfigProvider theme={{

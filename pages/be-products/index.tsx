@@ -1,5 +1,5 @@
 import { WithDefaultLayout } from "@/components/DefautLayout";
-import LightModeButton from "@/components/LightModeButton";
+import { db, FavoriteProduct } from "@/data/offlineStorage";
 import { ProductClient, ProductDataListResponse } from "@/functions/BackendApiClient";
 import { useSwrFetcherWithAccessToken } from "@/functions/useSwrFetcherWithAccessToken";
 import { Page } from "@/types/Page";
@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Modal, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
+import { useLiveQuery } from "dexie-react-hooks";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -89,8 +90,8 @@ const ProductIndexPage: Page = () => {
             title: 'Action',
             dataIndex: 'productId',
             render: (__value, product) => <>
-                <Button className="bg-gray-200" onClick={() => onClickAddToFavorite(product)}>
-                    <FontAwesomeIcon className="text-white" icon={faStar} />
+                <Button className="bg-white-200" onClick={() => onClickAddToFavorite(product)}>
+                    <FontAwesomeIcon className="text-yellow-300" icon={faStar} />
                 </Button>
                 <Button className="bg-red-500" onClick={() => onClickDeleteProduct(product)}>
                     <FontAwesomeIcon className="text-white" icon={faTrash} />
@@ -99,8 +100,29 @@ const ProductIndexPage: Page = () => {
         }
     ];
 
-    function onClickAddToFavorite(product: ProductData) {
-        console.log('Add to favorite', product);
+    async function onClickAddToFavorite(product: ProductData) {
+        try {
+            // Query the favorites data by product ID.
+            const existingData = await db.favorites
+                .where('id')
+                .equals(product.productId)
+                .first();
+
+            // If the data exists, delete it.
+            if (existingData) {
+                await db.favorites.delete(existingData.id);
+                return;
+            }
+
+            // Otherwise, add the data.
+            await db.favorites.add({
+                id: product.productId,
+                name: product.name,
+                createdAt: new Date()
+            });
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     /**
@@ -163,13 +185,27 @@ const ProductIndexPage: Page = () => {
         </>
     }
 
+    const favoriteColumns: ColumnsType<FavoriteProduct> = [
+        {
+            title: 'Name', dataIndex: 'name',
+        },
+        {
+            title: 'Favorite Date',
+            dataIndex: 'createdAt',
+            render: (value: Date) => value.toLocaleString()
+        }
+    ];
+
+    const favoriteProducts = useLiveQuery(() => db.favorites.toArray());
+
     return <>
         <h1>Products</h1>
-        <LightModeButton></LightModeButton>
-
         <p>Welcome to the product page!</p>
         <Link href="/be-products/create">Click here to create a product</Link>
         {renderTable()}
+        <Table rowKey="id"
+            dataSource={favoriteProducts}
+            columns={favoriteColumns}></Table>
 
         {/* <table>
             <thead>
