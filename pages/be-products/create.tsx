@@ -8,12 +8,14 @@ import Link from "next/link";
 import CreateOrEditProductForm from "@/types/CreateOrEditProductForm";
 import { CreateOrEditProductFormSchema, CreateOrEditProductFormType } from "@/schemas/CreateOrEditProductSchema";
 import { DefaultApiRequestHeader } from "@/functions/DefaultApiRequestHeader";
+import { Authorize } from "@/components/Authorize";
+import { useAuthorizationContext } from "@/functions/AuthorizationContext";
 
 /**
  * Create new product page component.
  * @returns 
  */
-const CreateProductPage: Page = () => {
+const CreateProduct: React.FC = () => {
     return <>
         {CreateProductForm({})}
     </>
@@ -31,6 +33,8 @@ const CreateProductForm: React.FC = () => {
 
     const [isAlertVisible, setIsAlertVisible] = useState(false);
 
+    const {accessToken} = useAuthorizationContext();
+
     /**
      * Handle the form submission event.
      * @param e 
@@ -39,7 +43,9 @@ const CreateProductForm: React.FC = () => {
     async function onFormSubmit(formData: CreateOrEditProductForm) {
         // Using basic Fetch API to do POST request.
         const reqInit: RequestInit = {
-            headers: DefaultApiRequestHeader,
+            headers: {...DefaultApiRequestHeader,
+                'Authorization': `Bearer ${accessToken}`,
+            },
             method: 'POST',
             body: JSON.stringify(formData)
         }
@@ -107,6 +113,12 @@ const CreateProductForm: React.FC = () => {
             </Col>
         </Row>
     </Space>
+}
+
+const CreateProductPage: Page = () => {
+    return <Authorize>
+        <CreateProduct />
+    </Authorize>;
 }
 
 CreateProductPage.layout = WithDefaultLayout;

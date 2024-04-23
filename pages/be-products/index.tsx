@@ -1,3 +1,4 @@
+import { Authorize } from "@/components/Authorize";
 import { WithDefaultLayout } from "@/components/DefautLayout";
 import { db, FavoriteProduct } from "@/data/offlineStorage";
 import { ProductClient, ProductDataListResponse } from "@/functions/BackendApiClient";
@@ -11,9 +12,9 @@ import { Button, Modal, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { useLiveQuery } from "dexie-react-hooks";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-const ProductIndexPage: Page = () => {
+const ProductIndex: React.FC = () => {
     /**
      * Define the current page number.
      */
@@ -24,7 +25,7 @@ const ProductIndexPage: Page = () => {
      */
     const pageRows = 10;
 
-    const [__products, setProducts] = useState<ProductData[]>([]);
+    // const [__products, setProducts] = useState<ProductData[]>([]);
 
     // Reference: https://ant.design/components/modal.
     const [modal, contextHolder] = Modal.useModal();
@@ -45,33 +46,33 @@ const ProductIndexPage: Page = () => {
         });
 
 
-    async function fetchProducts() {
-        // Basic way.
-        // const data = await fetch('/api/be-custom/api/v1/product');
-        // const productData = (await data.json()) as ProductDataResponse;
-        // const products = productData.productDatas;
+    // async function fetchProducts() {
+    //     // Basic way.
+    //     // const data = await fetch('/api/be-custom/api/v1/product');
+    //     // const productData = (await data.json()) as ProductDataResponse;
+    //     // const products = productData.productDatas;
 
-        // Using the generated client code from NSwag Studio / Swagger.
-        const productClient = new ProductClient('http://localhost:3000/api/be-custom');
-        const productData = await productClient.productGET('', 1, 10);
-        const products = productData.productDatas as ProductData[];
+    //     // Using the generated client code from NSwag Studio / Swagger.
+    //     const productClient = new ProductClient('http://localhost:3000/api/be-custom');
+    //     const productData = await productClient.productGET('', 1, 10);
+    //     const products = productData.productDatas as ProductData[];
 
-        if (!products) {
-            return;
-        }
-        setProducts(products);
-    }
+    //     if (!products) {
+    //         return;
+    //     }
+    //     setProducts(products);
+    // }
 
     // For manual client-side fetching demonstration.
     // DO NOT USE THIS TECHNIQUE IN REAL CASE.
     // Use swr or React Query instead for best practice.
-    useEffect(() => {
-        try {
-            fetchProducts();
-        } catch (error) {
-            console.error(error);
-        }
-    }, []);
+    // useEffect(() => {
+    //     try {
+    //         fetchProducts();
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // }, []);
 
     /**
      * Define the columns for the product table using antd Table component.
@@ -199,15 +200,15 @@ const ProductIndexPage: Page = () => {
     const favoriteProducts = useLiveQuery(() => db.favorites.toArray());
 
     return <>
-        <h1>Products</h1>
-        <p>Welcome to the product page!</p>
-        <Link href="/be-products/create">Click here to create a product</Link>
-        {renderTable()}
-        <Table rowKey="id"
-            dataSource={favoriteProducts}
-            columns={favoriteColumns}></Table>
+            <h1>Products</h1>
+            <p>Welcome to the product page!</p>
+            <Link href="/be-products/create">Click here to create a product</Link>
+            {renderTable()}
+            <Table rowKey="id"
+                dataSource={favoriteProducts}
+                columns={favoriteColumns}></Table>
 
-        {/* <table>
+            {/* <table>
             <thead>
                 <tr>
                     <th>No.</th>
@@ -231,6 +232,12 @@ const ProductIndexPage: Page = () => {
             </tbody>
         </table> */}
     </>
+}
+
+const ProductIndexPage: Page = () => {
+    return <Authorize>
+        <ProductIndex />
+    </Authorize>;
 }
 
 ProductIndexPage.layout = WithDefaultLayout;
