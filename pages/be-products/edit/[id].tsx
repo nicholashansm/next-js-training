@@ -1,5 +1,8 @@
+import { Authorize } from "@/components/Authorize";
 import { WithDefaultLayout } from "@/components/DefautLayout";
-import { ProductClient } from "@/functions/BackendApiClient";
+import { useAuthorizationContext } from "@/functions/AuthorizationContext";
+// import { ProductClient } from "@/functions/BackendApiClient";
+import { DefaultApiRequestHeader } from "@/functions/DefaultApiRequestHeader";
 import { useSwrFetcherWithAccessToken } from "@/functions/useSwrFetcherWithAccessToken";
 import { CreateOrEditProductFormType, CreateOrEditProductFormSchema } from "@/schemas/CreateOrEditProductSchema";
 import { Page } from "@/types/Page";
@@ -18,7 +21,7 @@ export interface ProductDetailResponse {
     price?: number;
 }
 
-const EditProductPage: Page<{ id: string }> = ({ id }) => {
+const EditProduct: React.FC<{ id: string }> = ({ id }) => {
     const [isAlertVisible, setIsAlertVisible] = useState(false);
 
     const queryFetcher = useSwrFetcherWithAccessToken();
@@ -51,6 +54,8 @@ const EditProductPage: Page<{ id: string }> = ({ id }) => {
      * @param e 
      * @returns 
      */
+    const {accessToken} = useAuthorizationContext();
+
     async function onFormSubmit(formData: CreateOrEditProductFormType) {
         // ID should not be empty, but whenever we have a nullable property,
         // we should always check if it is null or not first.
@@ -64,16 +69,30 @@ const EditProductPage: Page<{ id: string }> = ({ id }) => {
             return;
         }
 
-        // Using the generated client code from NSwag Studio.
-        const productClient = new ProductClient('http://localhost:3000/api/be-custom');
+        const reqInit: RequestInit = {
+            headers: {...DefaultApiRequestHeader,
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            method: 'PUT',
+            body: JSON.stringify(formData)
+        }
+
         try {
-            await productClient.productPUT(formData.id, {
-                name: formData.name,
-                price: formData.price
-            });
+            await fetch(`/api/be-custom/api/v1/product/${formData.id}`, reqInit);
         } catch (error) {
             console.error(error);
         }
+    
+        // Using the generated client code from NSwag Studio.
+        // const productClient = new ProductClient('http://localhost:3000/api/be-custom');
+        // try {
+        //     await productClient.productPUT(formData.id, {
+        //         name: formData.name,
+        //         price: formData.price
+        //     });
+        // } catch (error) {
+        //     console.error(error);
+        // }
 
         setIsAlertVisible(true);
     }
@@ -139,6 +158,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const { id } = context.query;
 
     return { props: { id } };
+}
+
+const EditProductPage: Page<{id: string}> = ({ id })=> {
+    return <Authorize>
+        <EditProduct id={id} />
+    </ Authorize>
 }
 
 EditProductPage.layout = WithDefaultLayout;
