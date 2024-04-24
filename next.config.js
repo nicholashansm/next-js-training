@@ -34,7 +34,7 @@ function getSecurityHeaders(isProd) {
                 // https://report-uri.com/home/generate
                 // https://csp-evaluator.withgoogle.com/
                 key: 'Content-Security-Policy',
-                value: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; object-src 'none'`
+                value: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://robohash.org; font-src 'self'; object-src 'none'`
             }
         );
     }
